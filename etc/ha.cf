@@ -1,0 +1,17 @@
+bcast interface 
+keepalive 2
+warntime 10
+deadtime 30
+initdead 120
+hopfudge 1
+udpport 694
+auto_failback off 
+node master 
+node slave 
+ping gateway 
+respawn root /usr/lib64/heartbeat/ipfail
+apiauth ipfail gid=root uid=root
+watchdog    /dev/watchdog
+logfacility	local0
+logfile /var/log/ha-log.log 
+debugfile /var/log/ha-debug.log

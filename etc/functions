@@ -1,0 +1,93 @@
+#!/bin/bash
+#
+#
+####Some Special Functions####
+
+log=log/install.log
+
+EXIT()
+{
+	exit
+}
+
+ECHO()
+{
+   	echo  
+        echo -ne "\033[32m$1\033[m" | tee -a $log
+}
+
+OHCE()
+{
+	column=`get_column`
+	string=$1
+	length=${#string}
+	offset=`expr $column - $length - 2`
+	case $1 in
+		"OK")
+       			echo -e "\033[${offset}G[\033[32m$1\033[m]" | tee -a $log 
+			echo >> $log
+			;;
+		"NO")
+       			echo -e "\033[${offset}G[\033[31m$1\033[m]" | tee -a $log 
+			echo >> $log
+			;;
+		"Done")
+       			echo -e "\033[${offset}G[\033[32m$1\033[m]" | tee -a $log 
+			echo >> $log
+			;;
+			
+	esac
+}
+
+get_arch()
+{
+	arch=`uname -m`
+	echo $arch
+}
+
+get_column()
+{
+	size=($(stty size))
+	column=${size[1]}
+	echo $column
+}
+
+print_green()
+{
+	column=`get_column`
+	string=$1
+	length=${#string}
+	position=`expr $column / 2 - $length / 2`
+	echo -e "\033[32m\033[${position}G$1\033[m"
+}
+print_red()
+{
+	column=`get_column`
+	string=$1
+	length=${#string}
+	position=`expr $column / 2 - $length / 2`
+	echo -e "\033[31m\033[${position}G$1\033[m"
+}
+print_point()
+{
+	for i in `seq $1 -1 0`  
+	do
+		echo -ne " $i\b\b"
+		sleep 1
+	done
+	echo -ne "  \b\b"
+}
+print_line()
+{
+	size=($(stty size)) 
+	column=${size[1]}
+	for i in `seq $column`
+	do
+		echo -en "\033[32m-\033[m"
+	done
+	printf "\n"
+}
+rc_exit()
+{
+	exit 0
+}

@@ -1,0 +1,19 @@
+#!/bin/sh
+
+wait()
+{
+while true 
+do
+	for i in '-' '\\' '|' '/'
+	do
+		echo -ne "$i\b"
+		sleep 0.1 
+	done
+done
+}
+
+
+wait &
+
+		
+

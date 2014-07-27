@@ -1,0 +1,192 @@
+#!/bin/sh
+#
+#Author : niuminguo@d-heaven.com
+#Date   : 2011-09-03
+#Description: this script is used for opensuse 11.1 32/64 , sles 11 64, rhel 5.5 64 centos 5.4 32 ; others are not guarantee!
+#
+
+BASE_DIR=$(dirname `pwd`/$0)
+
+source etc/functions
+
+Detect_System()
+{
+	ECHO "Detect System"
+
+	if [ ! -z `which lsb_release >/dev/null 2>&1` ];then  
+		Release=`lsb_release -a | grep ^Release | awk '{print $2}'`
+		Flag=`lsb_release -a | grep ^Description | awk '{print $2}'`
+	else 	
+		if [ -f /etc/SuSE-release ];then
+			Release=$(grep VERSION /etc/SuSE-release | awk '{print $3}')
+			Flag=$(cat /etc/SuSE-release | head -1 | awk '{print $1}') 
+		else 
+			if [ -f /etc/redhat-release ];then
+				Release=$(cat /etc/redhat-release | awk '{print $(NF-1)}')
+				Flag=$(cat /etc/redhat-release | awk '{print $1}')
+			else
+				echo "the system is not supported!"
+				exit	
+			fi
+		fi
+	fi
+			
+			
+
+	[ $Flag = "openSUSE" ] && SYSTEM="opensuse"
+	[ $Flag = "CentOS" ] && SYSTEM="centos"
+	[ $Flag = "SUSE" ] && SYSTEM="sles"
+	[ $Flag = "Red"  ] && SYSTEM="rhel"
+
+	#Detect the byte of the operating system 
+	March=`uname -m`
+	if [ $March = 'x86_64' ];then
+    		BYTE=64
+	else
+    		BYTE=32
+	fi
+   	OHCE  "Done"
+}
+
+
+#Install HeartBeat
+
+HeartBeat_Install()
+{
+	ECHO "Install HeartBeat"
+	
+	case $SYSTEM in
+		centos)
+    			cd src/$SYSTEM/$Release/$BYTE
+			for file in `cat install`
+			do 
+				rpm -i --force $file > /dev/null 2>&1 
+			done
+			cd $BASE_DIR
+			;;
+		opensuse)
+    			cd src/$SYSTEM/$Release/$BYTE
+			for file in `ls`
+			do 
+				rpm -i --force --nodeps $file  > /dev/null 2>&1
+			done
+			cd $BASE_DIR
+			;;
+		sles)
+    			cd src/$SYSTEM/$Release/$BYTE
+			for file in *
+			do 
+				rpm -i --force --nodeps $file  > /dev/null 2>&1
+			done
+			cd $BASE_DIR
+			;;
+		rhel)
+    			cd src/$SYSTEM/$Release/$BYTE
+			for file in `cat install`
+			do 
+				rpm -i --force $file > /dev/null 2>&1 
+			done
+			cd $BASE_DIR 
+			;;
+	esac
+			
+	install  etc/{authkeys,ha.cf,haresources}  /etc/ha.d 
+	chmod  0600 /etc/ha.d/authkeys
+
+	#create the heartbeat resourcemanager
+
+	if [ $BYTE = 64 ];then
+   		touch /usr/lib64/heartbeat/ResourceManager
+   		chmod 0777 /usr/lib64/heartbeat/ResourceManager
+	else
+   		touch /usr/lib/heartbeat/ResourceManager
+   		chmod 0777 /usr/lib/heartbeat/ResourceManager
+	fi
+
+	#create the heartbeat log directory
+
+	if [ ! -d /var/log/ha_log ];then
+   		mkdir -p /var/log/ha_log
+	fi
+
+	chkconfig --level 345 heartbeat on > /dev/null 2>&1 
+
+	sleep 3
+   	OHCE  "Done"
+}
+
+         
+HeartBeat_Uninstall()
+{
+	ECHO "Uninstall HeartBeat"
+	
+	case $SYSTEM in
+		centos)
+    			cd src/$SYSTEM/$Release/$BYTE
+			for file in `tac install`
+			do
+			     echo $file | awk -F'.rpm' '{print $1}' | xargs rpm -e  > /dev/null 2>&1
+			done
+			cd $BASE_DIR 
+			;;
+		opensuse)
+    			cd src/$SYSTEM/$Release/$BYTE
+			for file in `ls`
+			do
+			    echo $file | awk -F'.rpm' '{print $1}' | xargs rpm -e --nodeps --noscripts > /dev/null 2>&1 
+			done
+			cd $BASE_DIR 
+			;;
+		sles)
+    			cd src/$SYSTEM/$Release/$BYTE
+			for file in * 
+			do
+			    echo $file | awk -F'.rpm' '{print $1}' | xargs rpm -e --nodeps --noscripts > /dev/null 2>&1 
+			done
+			cd $BASE_DIR 
+			;;
+		rhel)
+    			cd src/$SYSTEM/$Release/$BYTE
+			for file in `tac install`
+			do
+			     echo $file | awk -F'.rpm' '{print $1}' | xargs rpm -e  > /dev/null 2>&1
+			done
+			cd $BASE_DIR 
+			;;
+	esac
+	OHCE  "Done"
+}
+
+			
+
+case $1 in 
+	install)
+		print_line
+		print_green "Install HeartBeat Start"
+		print_line
+		Detect_System
+		HeartBeat_Install
+		print_line
+		print_green "HeartBeat Install Succeed"
+		print_line
+		;;
+	uninstall)
+		print_line
+		print_green "Uninstall HeartBeat Start"
+		print_line
+		Detect_System
+		HeartBeat_Uninstall
+		print_line
+		print_green "HeartBeat Uninstall Succeed"
+		print_line
+		;;
+	*)
+		echo
+		echo -e "\033[32m\033[1mUsage : $0 [ install | uninstall ]\033[m"
+		echo 
+		exit 0
+		;;
+		
+esac
+
+rc_exit

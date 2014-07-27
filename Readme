@@ -1,0 +1,11 @@
+How To Use This Script ?
+
+1. edit the file conf/heartbeat.properties. add the host name which you can get by `uname -n` and the ipaddress someone had given you.
+
+2. run './heartbeat install' for installing heartbeat ,and './heartbeat uninstall' for removing it.
+
+3. run 'service heartbeat start' , make sure there is no error. and wait for 120 senconds more or less,then use 'ifconfig' to see wether the virtual ip had come out. 
+
+4. if you got any problem, you can contact the author for help.(niuminguo@d-heaven.com) 
+
+So, enjoy you self and  have fun! 
